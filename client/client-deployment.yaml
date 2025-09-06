@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: client-deployment
 spec:
-  replicas: 2
+  # Set the number of replicas to 3 for better availability and load balancing.
+  replicas: 3
   selector:
     matchLabels:
       app: client
@@ -14,12 +15,11 @@ spec:
     spec:
       containers:
       - name: client
-        image: aashkajain/frontend:BUILD_NUMBER
+        # Change the image path to use your Google Container Registry (GCR) path.
+        image: us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/client:latest
         ports:
         - containerPort: 3000
         env:
+        # Update the backend hostname to match the name of the Kubernetes service.
         - name: REACT_APP_YOUR_HOSTNAME
-          valueFrom:
-            secretKeyRef:
-              name: secrets
-              key: REACT_APP_YOUR_HOSTNAME
+          value: "http://server-service"

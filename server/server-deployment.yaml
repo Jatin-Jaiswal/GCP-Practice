@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: server-deployment
 spec:
-  replicas: 2
+  # Set the number of replicas to 3 for better availability and load balancing.
+  replicas: 3
   selector:
     matchLabels:
       app: server
@@ -14,10 +15,12 @@ spec:
     spec:
       containers:
       - name: server
-        image: aashkajain/backend:BUILD_NUMBER
+        # Change the image path to use your Google Container Registry (GCR) path.
+        image: us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/server:latest
         ports:
         - containerPort: 5000
         env:
+        # We need to retrieve the ATLAS_URI from a secret in Kubernetes.
         - name: ATLAS_URI
           valueFrom:
             secretKeyRef:

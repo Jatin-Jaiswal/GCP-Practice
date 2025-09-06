@@ -1,8 +1,19 @@
 pipeline {
     agent any
 
+    // Ensure kubectl is available on the Jenkins agent
+    tools {
+        // Change this if you have a different version of kubectl configured
+        // in Jenkins Global Tool Configuration
+        kubernetes 'kubectl'
+    }
+
     environment {
-        KUBECONFIG = '/var/lib/jenkins/.kube/config' 
+        // Define common variables for easy management
+        PROJECT_ID = 'iron-handler-471307-u7'
+        GCR_REPO = 'gcp-practice-images'
+        GCR_PATH_CLIENT = "us-central1-docker.pkg.dev/${PROJECT_ID}/${GCR_REPO}/client"
+        GCR_PATH_SERVER = "us-central1-docker.pkg.dev/${PROJECT_ID}/${GCR_REPO}/server"
     }
 
     stages {
@@ -13,61 +24,59 @@ pipeline {
                         googlechatnotification url: "${GOOGLE_CHAT_URL}",
                         message: "🔔 Build #${env.BUILD_NUMBER} for ${env.JOB_NAME} started."
                     }
-                
                 }
-                git branch: 'main', credentialsId: 'git', url: 'git@bitbucket.org:aashka7240/jenkins-practice.git'
+                // Use HTTPS for cloning with the github-pat credential
+                git branch: 'main', credentialsId: 'github-pat', url: 'https://github.com/Jatin-Jaiswal/GCP-Practice.git'
             }
         }
         
         stage('Docker Build') {
             steps {
                  script {
-                    sh '''#!/bin/bash
-                    docker build -t aashkajain/backend:$BUILD_NUMBER ./server
-                    docker build -t aashkajain/frontend:$BUILD_NUMBER ./client
-                    '''
+                    sh "docker build -t ${GCR_PATH_SERVER}:${env.BUILD_NUMBER} ./server"
+                    sh "docker build -t ${GCR_PATH_CLIENT}:${env.BUILD_NUMBER} ./client"
                 }
             }
         }
 
-        stage('Push Docker Images') {
+        stage('Push Docker Images to GCR') {
             steps {
-
-                 script {
-            withCredentials([usernamePassword(credentialsId: 'dockerhub-registry-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                sh '''#!/bin/bash
-                docker login -u $DOCKER_USER -p $DOCKER_PASS
-                docker push aashkajain/backend:$BUILD_NUMBER
-                docker push aashkajain/frontend:$BUILD_NUMBER
-                '''
-            }
-        }   
-                
+                // Use the Google Service Account credentials to authenticate with GCR
+                withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GCP_SA_KEY')]) {
+                    sh '''
+                    # Login to GCR using the service account key
+                    cat "${GCP_SA_KEY}" | docker login -u _json_key_base64 --password-stdin https://us-central1-docker.pkg.dev
+                    
+                    # Push the backend and frontend images with the build number tag
+                    docker push ${GCR_PATH_SERVER}:${BUILD_NUMBER}
+                    docker push ${GCR_PATH_CLIENT}:${BUILD_NUMBER}
+                    
+                    # Also push a 'latest' tag for convenience
+                    docker tag ${GCR_PATH_SERVER}:${BUILD_NUMBER} ${GCR_PATH_SERVER}:latest
+                    docker tag ${GCR_PATH_CLIENT}:${BUILD_NUMBER} ${GCR_PATH_CLIENT}:latest
+                    docker push ${GCR_PATH_SERVER}:latest
+                    docker push ${GCR_PATH_CLIENT}:latest
+                    '''
+                }
             }
         }
-
-        
         
         stage('Deploy to Kubernetes') {
             steps {
                script {
-                // Replace the BUILD_NUMBER placeholder with the actual build number
-                    sh '''#!/bin/bash
-                    sed -i "s/BUILD_NUMBER/${BUILD_NUMBER}/g" server/server-deployment.yaml
-                    sed -i "s/BUILD_NUMBER/${BUILD_NUMBER}/g" client/client-deployment.yaml
+                    // Update the deployment files with the correct image paths
+                    sh "sed -i 's|us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/client:latest|${GCR_PATH_CLIENT}:${BUILD_NUMBER}|g' client/client-deployment.yaml"
+                    sh "sed -i 's|us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/server:latest|${GCR_PATH_SERVER}:${BUILD_NUMBER}|g' server/server-deployment.yaml"
 
-                    cat client/client-deployment.yaml
-                    cat server/server-deployment.yaml
-
-
-
-                    kubectl apply -f server/server-deployment.yaml
-                    kubectl apply -f server/server-service.yaml
-                    kubectl apply -f client/client-deployment.yaml
-                    kubectl apply -f client/client-service.yaml
-                    kubectl rollout restart deploy client-deployment
-                    kubectl rollout restart deploy server-deployment
-                    '''
+                    // Apply the deployment and service configurations
+                    sh "kubectl apply -f server/server-deployment.yaml"
+                    sh "kubectl apply -f server/server-service.yaml"
+                    sh "kubectl apply -f client/client-deployment.yaml"
+                    sh "kubectl apply -f client/client-service.yaml"
+                    
+                    // Trigger a rolling restart to pick up the new images
+                    sh "kubectl rollout restart deploy client-deployment"
+                    sh "kubectl rollout restart deploy server-deployment"
                 }
             }
         }
@@ -78,7 +87,6 @@ pipeline {
             script {
                 def log = currentBuild.rawBuild.getLog(100).join('\n')
                 writeFile file: 'console.log', text: log
-                
             }
         }
          success {

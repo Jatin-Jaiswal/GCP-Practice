@@ -3,10 +3,13 @@ kind: Service
 metadata:
   name: client-service
 spec:
-  type: NodePort
+  # Use LoadBalancer to expose the service to the internet.
+  type: LoadBalancer
   selector:
     app: client
   ports:
-    - port: 3000
+    - protocol: TCP
+      # Expose on port 80 for standard web traffic.
+      port: 80
+      # Direct traffic to the container's port 3000.
       targetPort: 3000
-      nodePort: 30001

@@ -3,11 +3,13 @@ kind: Service
 metadata:
   name: server-service
 spec:
-  type: NodePort
+  # Use ClusterIP since the service will only be accessed from within the cluster by the client.
+  type: ClusterIP
   selector:
     app: server
   ports:
-    - port: 5000
+    - protocol: TCP
+      # The port that the service will listen on.
+      port: 5000
+      # The port on the container to direct traffic to.
       targetPort: 5000
-      nodePort: 30002
-

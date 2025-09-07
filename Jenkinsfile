@@ -54,8 +54,14 @@ pipeline {
     
         stage('Deploy to Kubernetes') {
             steps {
-                script {
+                withCredentials([file(credentialsId: 'jenkins-gke-sa', variable: 'GCP_KEY_FILE')]) {
                     sh '''#!/bin/bash
+                    echo "Activating Google Cloud Service Account for GKE..."
+                    gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
+                    
+                    echo "Fetching GKE cluster credentials..."
+                    gcloud container clusters get-credentials my-cluster --region us-central1 --project ${PROJECT_ID}
+
                     echo "Applying Kubernetes deployments and services..."
                     
                     # Apply all YAML files

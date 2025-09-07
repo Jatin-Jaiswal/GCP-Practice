@@ -1,13 +1,6 @@
 pipeline {
     agent any
 
-    // Ensure kubectl is available on the Jenkins agent
-    tools {
-        // Change this if you have a different version of kubectl configured
-        // in Jenkins Global Tool Configuration
-        kubernetes 'kubectl'
-    }
-
     environment {
         // Define common variables for easy management
         PROJECT_ID = 'iron-handler-471307-u7'
@@ -29,10 +22,10 @@ pipeline {
                 git branch: 'main', credentialsId: 'github-pat', url: 'https://github.com/Jatin-Jaiswal/GCP-Practice.git'
             }
         }
-        
+    
         stage('Docker Build') {
             steps {
-                 script {
+                script {
                     sh "docker build -t ${GCR_PATH_SERVER}:${env.BUILD_NUMBER} ./server"
                     sh "docker build -t ${GCR_PATH_CLIENT}:${env.BUILD_NUMBER} ./client"
                 }
@@ -60,10 +53,10 @@ pipeline {
                 }
             }
         }
-        
-           stage('Deploy to Kubernetes') {
+    
+        stage('Deploy to Kubernetes') {
             steps {
-               script {
+                script {
                     sh '''#!/bin/bash
                     echo "Applying Kubernetes deployments and services..."
                     
@@ -89,7 +82,7 @@ pipeline {
                 writeFile file: 'console.log', text: log
             }
         }
-         success {
+        success {
             script {
                 def log = readFile('console.log')
                 withCredentials([string(credentialsId: 'google-chat-url', variable: 'GOOGLE_CHAT_URL')]) {

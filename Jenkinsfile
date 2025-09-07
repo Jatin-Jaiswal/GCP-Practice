@@ -12,12 +12,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    withCredentials([string(credentialsId: 'google-chat-url', variable: 'GOOGLE_CHAT_URL')]) {
-                        googlechatnotification url: "${GOOGLE_CHAT_URL}",
-                        message: "🔔 Build #${env.BUILD_NUMBER} for ${env.JOB_NAME} started."
-                    }
-                }
                 // Use HTTPS for cloning with the github-pat credential
                 git branch: 'main', credentialsId: 'github-pat', url: 'https://github.com/Jatin-Jaiswal/GCP-Practice.git'
             }
@@ -71,39 +65,6 @@ pipeline {
                     kubectl rollout restart deployment/server-deployment
                     '''
                 }
-            }
-        }
-    }
-    
-    post {
-        always {
-            script {
-                def log = currentBuild.rawBuild.getLog(100).join('\n')
-                writeFile file: 'console.log', text: log
-            }
-        }
-        success {
-            script {
-                def log = readFile('console.log')
-                withCredentials([string(credentialsId: 'google-chat-url', variable: 'GOOGLE_CHAT_URL')]) {
-                    def message = "✅ ${env.JOB_NAME} : Build #${env.BUILD_NUMBER} - ${currentBuild.currentResult}: Check output at ${env.BUILD_URL}\n\nLog:\n${log.take(4000)}"
-                    echo "Google Chat URL: ${GOOGLE_CHAT_URL}"
-                    googlechatnotification url: "${GOOGLE_CHAT_URL}",
-                    message: message
-                }
-                cleanWs()
-            }
-        }
-        failure {
-            script {
-                def log = readFile('console.log')
-                withCredentials([string(credentialsId: 'google-chat-url', variable: 'GOOGLE_CHAT_URL')]) {
-                    def message = "❌ ${env.JOB_NAME} : Build #${env.BUILD_NUMBER} - ${currentBuild.currentResult}: Check output at ${env.BUILD_URL}\n\nLog:\n${log.take(4000)}"
-                    echo "Google Chat URL: ${GOOGLE_CHAT_URL}"
-                    googlechatnotification url: "${GOOGLE_CHAT_URL}",
-                    message: message
-                }
-                cleanWs()
             }
         }
     }

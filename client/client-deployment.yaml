@@ -21,8 +21,7 @@ spec:
         ports:
         - containerPort: 3000
         env:
-        # Note: Your frontend code (running in the browser) cannot use "http://server-service"
-        # because that's an internal-only name. You must get the public IP of the
-        # server-service once it's provisioned and update your frontend's code to use that IP.
+        # Now that the server-service has a public IP, we can use it to
+        # configure the frontend's backend API URL.
         - name: REACT_APP_YOUR_HOSTNAME
-          value: "http://server-service"
+          value: "http://34.28.153.155:5000"

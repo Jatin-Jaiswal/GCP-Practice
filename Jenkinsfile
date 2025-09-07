@@ -29,22 +29,23 @@ pipeline {
         stage('Push Docker Images to GCR') {
             steps {
                 // Now using the correct method for the Google Service Account credential type
-                withCredentials([googleServiceAccount(credentialsId: 'jenkins-gke-sa', variable: 'GCP_SA_KEY')]) {
+                withCredentials([file(credentialsId: 'jenkins-gke-sa', variable: 'GCP_KEY_FILE')]) {
                     sh '''
-                    # Login to GCR using the service account key
-                    docker login -u _json_key_base64 --password-stdin https://us-central1-docker.pkg.dev <<< "${GCP_SA_KEY}"
-                    
-                    # Push the backend and frontend images with the build number tag
+                    # Activate service account
+                    gcloud auth activate-service-account --key-file=$GCP_KEY_FILE
+                    gcloud config set project ${PROJECT_ID}
+
+                    # Configure Docker to use gcloud as credential helper
+                    gcloud auth configure-docker us-central1-docker.pkg.dev -q
+
+                    # Push images
                     docker push ${GCR_PATH_SERVER}:${BUILD_NUMBER}
                     docker push ${GCR_PATH_CLIENT}:${BUILD_NUMBER}
-                    
-                    # Also push a 'latest' tag for convenience
-                    docker tag ${GCR_PATH_SERVER}:${BUILD_NUMBER} ${GCR_PATH_SERVER}:latest
-                    docker tag ${GCR_PATH_CLIENT}:${BUILD_NUMBER} ${GCR_PATH_CLIENT}:latest
                     docker push ${GCR_PATH_SERVER}:latest
                     docker push ${GCR_PATH_CLIENT}:latest
-                    '''
-                }
+            '''
+}
+
             }
         }
     

@@ -28,11 +28,11 @@ pipeline {
 
         stage('Push Docker Images to GCR') {
             steps {
-                // Use the Google Service Account credentials to authenticate with GCR
-                withCredentials([file(credentialsId: 'jenkins-gke-sa', variable: 'GCP_SA_KEY')]) {
+                // Now using the correct method for the Google Service Account credential type
+                withCredentials([googleServiceAccount(credentialsId: 'jenkins-gke-sa', variable: 'GCP_SA_KEY')]) {
                     sh '''
                     # Login to GCR using the service account key
-                    cat "${GCP_SA_KEY}" | docker login -u _json_key_base64 --password-stdin https://us-central1-docker.pkg.dev
+                    docker login -u _json_key_base64 --password-stdin https://us-central1-docker.pkg.dev <<< "${GCP_SA_KEY}"
                     
                     # Push the backend and frontend images with the build number tag
                     docker push ${GCR_PATH_SERVER}:${BUILD_NUMBER}

@@ -61,7 +61,7 @@ pipeline {
             }
         }
         
-           sstage('Deploy to Kubernetes') {
+           stage('Deploy to Kubernetes') {
             steps {
                script {
                     sh '''#!/bin/bash

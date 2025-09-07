@@ -7,7 +7,7 @@ pipeline {
         GCR_REPO = 'gcp-practice-images'
         GCR_PATH_CLIENT = "us-central1-docker.pkg.dev/${PROJECT_ID}/${GCR_REPO}/client"
         GCR_PATH_SERVER = "us-central1-docker.pkg.dev/${PROJECT_ID}/${GCR_REPO}/server"
-        CLUSTER_NAME = 'jenkins-cluster' // <-- Updated with the name from your screenshot
+        CLUSTER_NAME = 'jenkins-cluster'
     }
 
     stages {
@@ -61,7 +61,7 @@ pipeline {
                     gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
                     
                     echo "Fetching GKE cluster credentials..."
-                    gcloud container clusters get-credentials ${CLUSTER_NAME} --region us-central1 --project ${PROJECT_ID}
+                    gcloud container clusters get-credentials ${CLUSTER_NAME} --zone us-central1-a --project ${PROJECT_ID}
 
                     echo "Applying Kubernetes deployments and services..."
                     

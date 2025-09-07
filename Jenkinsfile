@@ -79,6 +79,18 @@ pipeline {
                     # Rolling restart to apply changes
                     kubectl rollout restart deployment/client-deployment
                     kubectl rollout restart deployment/server-deployment
+
+                    echo "---------------------------------------"
+                    echo "Service URLs:"
+                    echo "---------------------------------------"
+                    # Get the external IP of the client-service
+                    CLIENT_IP=$(kubectl get services client-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+                    echo "Frontend (Client) URL: http://${CLIENT_IP}"
+
+                    # Get the internal IP of the server-service
+                    SERVER_IP=$(kubectl get services server-service -o jsonpath='{.spec.clusterIP}')
+                    echo "Backend (Server) URL: http://${SERVER_IP}:5000 (Internal access only)"
+                    echo "---------------------------------------"
                     '''
                 }
             }

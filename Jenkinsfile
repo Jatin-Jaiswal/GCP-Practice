@@ -63,6 +63,11 @@ pipeline {
                     echo "Fetching GKE cluster credentials..."
                     gcloud container clusters get-credentials ${CLUSTER_NAME} --zone us-central1-a --project ${PROJECT_ID}
 
+                    echo "Updating Kubernetes deployment YAMLs with the latest image tags..."
+                    # Use sed to replace the image tag in the deployment files with the 'latest' tag
+                    sed -i "s|image: .*client:.*|image: ${GCR_PATH_CLIENT}:latest|g" ./client/client-deployment.yaml
+                    sed -i "s|image: .*server:.*|image: ${GCR_PATH_SERVER}:latest|g" ./server/server-deployment.yaml
+
                     echo "Applying Kubernetes deployments and services..."
                     
                     # Apply all YAML files

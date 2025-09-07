@@ -61,18 +61,21 @@ pipeline {
             }
         }
         
-           stage('Deploy to Kubernetes') {
+           sstage('Deploy to Kubernetes') {
             steps {
                script {
                     sh '''#!/bin/bash
-                    # The kubectl command is already available on the VM
-                    # because we configured it in a previous step.
+                    echo "Applying Kubernetes deployments and services..."
+                    
+                    # Apply all YAML files
                     kubectl apply -f ./server/server-deployment.yaml
                     kubectl apply -f ./server/server-service.yaml
                     kubectl apply -f ./client/client-deployment.yaml
                     kubectl apply -f ./client/client-service.yaml
-                    kubectl rollout restart deploy client-deployment
-                    kubectl rollout restart deploy server-deployment
+
+                    # Rolling restart to apply changes
+                    kubectl rollout restart deployment/client-deployment
+                    kubectl rollout restart deployment/server-deployment
                     '''
                 }
             }

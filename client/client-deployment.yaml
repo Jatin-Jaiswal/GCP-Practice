@@ -1,3 +1,4 @@
+# The client-deployment.yaml file
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,11 +16,13 @@ spec:
     spec:
       containers:
       - name: client
-        # Change the image path to use your Google Container Registry (GCR) path.
+        # The image path to your Google Container Registry (GCR) path.
         image: us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/client:latest
         ports:
         - containerPort: 3000
         env:
-        # Update the backend hostname to match the name of the Kubernetes service.
+        # Note: Your frontend code (running in the browser) cannot use "http://server-service"
+        # because that's an internal-only name. You must get the public IP of the
+        # server-service once it's provisioned and update your frontend's code to use that IP.
         - name: REACT_APP_YOUR_HOSTNAME
           value: "http://server-service"

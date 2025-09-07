@@ -3,8 +3,10 @@ kind: Service
 metadata:
   name: server-service
 spec:
-  # Use ClusterIP since the service will only be accessed from within the cluster by the client.
-  type: ClusterIP
+  # CHANGE: We are changing the type from ClusterIP to LoadBalancer.
+  # This will provision a public IP address for this service, allowing your
+  # frontend running in your browser to access the backend.
+  type: LoadBalancer
   selector:
     app: server
   ports:

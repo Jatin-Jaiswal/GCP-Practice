@@ -1,3 +1,4 @@
+# The server-deployment.yaml file
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,7 +16,7 @@ spec:
     spec:
       containers:
       - name: server
-        # Change the image path to use your Google Container Registry (GCR) path.
+        # The image path to your Google Container Registry (GCR) path.
         image: us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/server:latest
         ports:
         - containerPort: 5000

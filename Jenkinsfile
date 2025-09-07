@@ -29,7 +29,7 @@ pipeline {
         stage('Push Docker Images to GCR') {
             steps {
                 // Use the Google Service Account credentials to authenticate with GCR
-                withCredentials([file(credentialsId: 'gcp-sa-key', variable: 'GCP_SA_KEY')]) {
+                withCredentials([file(credentialsId: 'jenkins-gke-sa', variable: 'GCP_SA_KEY')]) {
                     sh '''
                     # Login to GCR using the service account key
                     cat "${GCP_SA_KEY}" | docker login -u _json_key_base64 --password-stdin https://us-central1-docker.pkg.dev

@@ -28,24 +28,27 @@ pipeline {
 
         stage('Push Docker Images to GCR') {
             steps {
-                // Now using the correct method for the Google Service Account credential type
+                // Using the Secret File credential and gcloud commands
                 withCredentials([file(credentialsId: 'jenkins-gke-sa', variable: 'GCP_KEY_FILE')]) {
                     sh '''
-                    # Activate service account
-                    gcloud auth activate-service-account --key-file=$GCP_KEY_FILE
+                    echo "Activating Google Cloud Service Account..."
+                    gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
                     gcloud config set project ${PROJECT_ID}
 
-                    # Configure Docker to use gcloud as credential helper
+                    echo "Configuring Docker to use gcloud as a credential helper..."
                     gcloud auth configure-docker us-central1-docker.pkg.dev -q
 
-                    # Push images
+                    echo "Pushing images with tag ${BUILD_NUMBER}..."
                     docker push ${GCR_PATH_SERVER}:${BUILD_NUMBER}
                     docker push ${GCR_PATH_CLIENT}:${BUILD_NUMBER}
+                    
+                    echo "Tagging and pushing 'latest' versions..."
+                    docker tag ${GCR_PATH_SERVER}:${BUILD_NUMBER} ${GCR_PATH_SERVER}:latest
+                    docker tag ${GCR_PATH_CLIENT}:${BUILD_NUMBER} ${GCR_PATH_CLIENT}:latest
                     docker push ${GCR_PATH_SERVER}:latest
                     docker push ${GCR_PATH_CLIENT}:latest
-            '''
-}
-
+                    '''
+                }
             }
         }
     

@@ -61,22 +61,19 @@ pipeline {
             }
         }
         
-        stage('Deploy to Kubernetes') {
+           stage('Deploy to Kubernetes') {
             steps {
                script {
-                    // Update the deployment files with the correct image paths
-                    sh "sed -i 's|us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/client:latest|${GCR_PATH_CLIENT}:${BUILD_NUMBER}|g' client/client-deployment.yaml"
-                    sh "sed -i 's|us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/server:latest|${GCR_PATH_SERVER}:${BUILD_NUMBER}|g' server/server-deployment.yaml"
-
-                    // Apply the deployment and service configurations
-                    sh "kubectl apply -f server/server-deployment.yaml"
-                    sh "kubectl apply -f server/server-service.yaml"
-                    sh "kubectl apply -f client/client-deployment.yaml"
-                    sh "kubectl apply -f client/client-service.yaml"
-                    
-                    // Trigger a rolling restart to pick up the new images
-                    sh "kubectl rollout restart deploy client-deployment"
-                    sh "kubectl rollout restart deploy server-deployment"
+                    sh '''#!/bin/bash
+                    # The kubectl command is already available on the VM
+                    # because we configured it in a previous step.
+                    kubectl apply -f ./server/server-deployment.yaml
+                    kubectl apply -f ./server/server-service.yaml
+                    kubectl apply -f ./client/client-deployment.yaml
+                    kubectl apply -f ./client/client-service.yaml
+                    kubectl rollout restart deploy client-deployment
+                    kubectl rollout restart deploy server-deployment
+                    '''
                 }
             }
         }

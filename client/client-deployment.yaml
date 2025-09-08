@@ -20,8 +20,7 @@ spec:
         image: us-central1-docker.pkg.dev/iron-handler-471307-u7/gcp-practice-images/client:latest
         ports:
         - containerPort: 3000
-        env:
-        # Now that the server-service has a public IP, we can use it to
-        # configure the frontend's backend API URL.
+       env:
+        # Update the backend API URL to use the internal service DNS name
         - name: REACT_APP_YOUR_HOSTNAME
-          value: "http://34.28.153.155:5000"
+          value: "http://server-service:5000"
